@@ -1,0 +1,1 @@
+This project aims to build a personal chatbot for daily tasks, using FastAPI with a clean architecture backend, SQLAlchemy, Hugging Face LLM models, and a React frontend. The project will be developed progressively.
