@@ -153,13 +153,6 @@ This project includes comprehensive learning materials in the `src/Learn/` direc
 - `GET /health` - Health check endpoint
 - `GET /` - Welcome message
 
-## 🤝 Contributing
-
-This project is being developed progressively. Contributions and suggestions are welcome!
-
-## 📄 License
-
-[Add your license here]
 
 ---
 
