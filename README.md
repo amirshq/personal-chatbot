@@ -2,6 +2,10 @@
 
 A personal chatbot for daily tasks built with **FastAPI** (clean architecture backend), **SQLAlchemy**, **Hugging Face LLM models**, and a **React frontend**. This project follows enterprise-grade architecture patterns and will be developed progressively.
 
+
+This project is intended for learning purposes and can be used in production with minor changes.
+I have added lots of comments to explain the concepts, variables and functions in the code.
+
 ## 🎯 Project Overview
 
 This project aims to build an intelligent personal assistant chatbot that can:
