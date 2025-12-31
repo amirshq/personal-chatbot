@@ -1,5 +1,3 @@
-# longterm_memory.py
-
 from typing import List, Dict, TYPE_CHECKING
 from datetime import datetime
 
