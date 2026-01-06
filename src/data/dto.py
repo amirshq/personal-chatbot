@@ -1,3 +1,12 @@
+# RECOMMENDED APPROACH for chatbot and how Chatbot use the dto.py:
+# 1. Client always sends: ChatMessageRequest (free-form text)
+# 2. Backend receives: ChatMessageRequest
+# 3. Backend uses LLM/parser to detect intent:
+#    - If the user message is like command-like → convert to StructuredQueryRequest internally
+#    - If the user message is like conversational → treat as FreeFormQueryRequest internally
+# 4. Backend processes accordingly
+
+
 """
 DTOs (Data Transfer Objects) for the chatbot API.
 
@@ -9,6 +18,8 @@ we still need DTOs to:
 4. Enable API documentation (OpenAPI/Swagger)
 5. Type safety and IDE support
 """
+
+
 
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -68,6 +79,7 @@ class ChatMessageResponse(BaseModel):
 
 class ChatHistoryRequest(BaseModel):
     """DTO for retrieving chat history - structured query parameters."""
+    # this class request format for retrieving chat history from Database (SQLAlchemy models) to API Client
     user_id: int
     session_id: Optional[str] = None
     limit: int = Field(default=50, ge=1, le=100)
@@ -76,6 +88,7 @@ class ChatHistoryRequest(BaseModel):
 
 class ChatHistoryResponse(BaseModel):
     """DTO for chat history response."""
+    # this class response format for retrieving chat history from Database (SQLAlchemy models) to API Client
     messages: List[dict] = Field(..., description="List of message objects")
     total: int = Field(..., description="Total number of messages")
     session_id: Optional[str] = None
@@ -83,19 +96,52 @@ class ChatHistoryResponse(BaseModel):
 
 # Alternative: If you want to support multiple input formats, use discriminated unions
 class StructuredQueryRequest(BaseModel):
-    """For structured queries (e.g., task creation)."""
+    """
+    For structured queries (e.g., task creation).
+    
+    NOTE: This is typically used INTERNALLY by the backend after parsing.
+    The client usually sends free-form text via ChatMessageRequest,
+    and the backend's LLM/parser determines if it should be treated as
+    a structured command (like "create_task") or free-form conversation.
+    
+    Example of what this represents AFTER parsing:
+    User says: "Create a task to buy groceries tomorrow"
+    → Backend parses to: {"action": "create_task", "parameters": {...}}
+
+
+    User types: "Create a task to buy groceries tomorrow"
+         ↓
+    Backend receives: ChatMessageRequest (free-form text)
+         ↓
+    Backend checks format:
+        - Looks like command? → Use StructuredQueryRequest
+        - Looks like conversation? → Use FreeFormQueryRequest
+         ↓
+Backend processes accordingly
+    """
     query_type: str = "structured"
     action: str  # "create_task", "list_tasks", etc.
     parameters: dict
 
 
 class FreeFormQueryRequest(BaseModel):
-    """For free-form natural language queries."""
+    """
+    For free-form natural language queries.
+    
+    NOTE: This is typically used INTERNALLY by the backend after parsing.
+    The client sends free-form text, and the backend determines if it's
+    a simple conversation (freeform) or needs structured action (structured).
+    
+    Example: User says "How are you?" → treated as freeform conversation
+    """
     query_type: str = "freeform"
     message: str
 
 
 # Union type for multiple input formats (if needed)
+# This would be used if you want to accept BOTH formats from the client
 from typing import Union
 ChatRequest = Union[StructuredQueryRequest, FreeFormQueryRequest, ChatMessageRequest]
+
+
 
