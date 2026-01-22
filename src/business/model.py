@@ -1,0 +1,113 @@
+#Here is the openai LLM model implementation
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from abc import ABC, abstractmethod
+import torch
+from ..business.model import PromptBuilder 
+from openai import OpenAI
+from dotenv import load_dotenv
+from typing import List
+load_dotenv()
+
+# Base LLM Interface
+class BaseLLM(ABC):
+    @abstractmethod
+    def generate(self, question: str, context: list[str]) -> str:
+        pass
+# abstractmethod used when you have 2 or more models that you will decide to use which one to use at runtime
+
+#HuggingFace Local LLM Implementation
+class LocalHFModel(BaseLLM):
+    """
+    Wrapper for openai LLMs to generate responses based on prompts.
+    Local Hugging Face Model Implementation
+    suitable for on-prem or offline inference
+    """
+    def __init__(self, model_name: str, system_prompt: str, max_input_tokens: int = 2048, max_output_tokens: int = 512):
+        
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name)
+        self.prompt_builder = PromptBuilder(system_prompt)
+        self.max_input_tokens = max_input_tokens
+        self.max_output_tokens = max_output_tokens
+
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+        """
+            Simple meaning:
+            If the tokenizer does not define a padding token,
+            the end-of-sequence (EOS) token is used as the padding token.
+
+            Explanation:
+            The pad_token is required to make all sequences in a batch the same length.
+
+            Example:
+                "Hello"
+                "Hello how are you"
+
+            Converted to tensors:
+                [Hello, <PAD>, <PAD>]
+                [Hello, how, are, you]
+
+            Without a pad_token, batch processing will fail and raise runtime errors.
+
+            The eos_token (End Of Sequence) indicates the end of a sentence.
+            Many autoregressive models (e.g., GPT-style):
+                - Are not designed for batch padding
+                - Do not define a pad_token (pad_token = None)
+                - Only provide an eos_token
+
+            Using EOS as PAD:
+                - Prevents crashes and runtime errors
+                - Does not negatively affect attention mechanisms
+                - Is a common and safe practice during inference
+        """
+    def generate(self, question: str, context: list[str]) -> str:
+        """
+        Generates a response from the LLM based on the provided question and context.
+        
+        Args:
+            question (str): The user's question or input.
+            context (list): Relevant context passages retrieved from the knowledge base.
+            max_length (int): Maximum length of the generated response.
+        
+        Returns:
+            str: The generated response from the LLM.
+        """
+        prompt = self.prompt_builder.build_prompt(question, context)
+        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True,max_length=self.max_input_tokens)
+        
+        with torch.no_grad():
+            outputs = self.model.generate(**inputs, max_length=self.max_input_tokens, pad_token_id=self.tokenizer.eos_token_id)
+        
+        generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        # Extract only the part after the prompt
+        return generated_text[len(prompt):].strip()
+
+#OPENAI LLM Implementation  
+
+class OpenAIModel(BaseLLM):
+    def __init__(self, client: OpenAI, model_name: str, system_prompt:str, temperature: float = 0.7, max_tokens: int = 512):
+        self.client = client
+        self.model_name = model_name
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.prompt_builder = PromptBuilder(system_prompt)
+    def generate(self, question: str, context: list[str]) -> str:
+        """
+        Generates a response from the OpenAI LLM based on the provided question and context.
+        Args:
+            question (str): The user's question or input.
+            context (list): Relevant context passages retrieved from the knowledge base.
+        Returns:
+            str: The generated response from the LLM.
+        """ 
+        messages = self.prompt_builder.build_prompt(question, context)
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=messages,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature
+        )
+        return response.choices[0].message.content.strip()
+    
