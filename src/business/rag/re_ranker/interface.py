@@ -1,3 +1,4 @@
+# Interface -> Contracts only
 from dataclasses import dataclass
 from typing import List, Dict, Any
 from abc import ABC, abstractmethod
