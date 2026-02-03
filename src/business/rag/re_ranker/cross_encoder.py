@@ -1,4 +1,5 @@
 """
+Here is the Business Logic of the Re-Ranker using Cross Encoder model.
 VectorDB → RetrievedChunk[]
           ↓
 CrossEncoderReRanker.score()

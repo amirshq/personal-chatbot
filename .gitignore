@@ -227,3 +227,12 @@ htmlcov/
 
 # Project specific
 /terminals/
+
+#Images 
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+#JSON files 
+*.json
