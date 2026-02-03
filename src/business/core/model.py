@@ -3,7 +3,7 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from abc import ABC, abstractmethod
 import torch
-from ..business.model import PromptBuilder 
+from .prompt_builder import PromptBuilder 
 from openai import OpenAI
 from dotenv import load_dotenv
 from typing import List
@@ -102,7 +102,7 @@ class OpenAIModel(BaseLLM):
         Returns:
             str: The generated response from the LLM.
         """ 
-        messages = self.prompt_builder.build_prompt(question, context)
+        messages = self.prompt_builder.build_messages(question, context)
         response = self.client.chat.completions.create(
             model=self.model_name,
             messages=messages,

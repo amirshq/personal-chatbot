@@ -10,6 +10,9 @@ The user's understanding is CORRECT for auto-detection approach:
 """
 
 from src.data.dto import ChatMessageRequest, StructuredQueryRequest, FreeFormQueryRequest
+from src.business.rag.retrieval import RAGPipeline
+from pathlib import Path
+import os
 
 
 def detect_query_type(message: str) -> str:
@@ -114,10 +117,11 @@ async def handle_structured_query(request: StructuredQueryRequest):
 
 
 async def handle_freeform_query(request: FreeFormQueryRequest):
-    """Handle free-form natural language conversation."""
-    # Send to LLM for general conversation
-    # No specific action needed - just chat
-    return {"reply": "This is a conversational response", "type": "freeform"}
+    """Handle free-form natural language conversation via RAG."""
+    persist_dir = Path(os.getenv("VECTOR_STORE_DIR", "src/business/rag/vectorstore"))
+    rag = RAGPipeline(persist_dir=str(persist_dir))
+    answer, confidence, _ = rag.answer(request.message)
+    return {"reply": answer, "type": "freeform", "confidence": confidence}
 
 
 # Example usage flow:
