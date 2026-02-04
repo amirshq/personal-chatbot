@@ -9,7 +9,7 @@ The user's understanding is CORRECT for auto-detection approach:
 - Backend routes to structured or free-form handler
 """
 
-from src.data.dto import ChatMessageRequest, StructuredQueryRequest, FreeFormQueryRequest
+from src.database.dto import ChatMessageRequest, StructuredQueryRequest, FreeFormQueryRequest
 from src.business.rag.retrieval import RAGPipeline
 from pathlib import Path
 import os

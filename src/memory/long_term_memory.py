@@ -26,7 +26,7 @@ class LongTermMemory:
         
         Args:
             vectordb: Vector database instance (from src.memory.vectordb.VectorDB)
-            embedder: Embedding model (must have embed(text: str) method)
+            embedder: Embedding model (must have embed(text: str) or embed_query(text: str) method)
             chunker: Text chunker (must have split(text: str) method)
         """
         self.vectordb = vectordb

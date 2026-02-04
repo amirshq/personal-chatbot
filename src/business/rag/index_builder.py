@@ -61,6 +61,7 @@ def build_index(
 
     all_chunks: List[Chunk] = []
     for doc in docs:
+        # use marker to identify start of table section
         table_marker = None
         if doc.table_text:
             # compute start idx of table section for provenance tagging
@@ -79,6 +80,7 @@ def build_index(
     ids = [c.chunk_id for c in all_chunks]
     metadatas = [c.metadata for c in all_chunks]
 
+    #This line is the main indexing operation
     vstore.upsert(ids=ids, embeddings=embeddings, metadatas=metadatas, documents=texts)
 
     return len(docs), len(all_chunks)
