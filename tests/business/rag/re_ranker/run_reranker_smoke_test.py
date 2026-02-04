@@ -4,9 +4,9 @@ import sys
 from pathlib import Path
 
 # Add project root to Python path
-# From: scripts/run_reranker_smoke_test.py
-# Go up 1 level: scripts -> project_root
-project_root = Path(__file__).parent.parent
+# From: tests/business/rag/re_ranker/run_reranker_smoke_test.py
+# Go up 4 levels: re_ranker -> rag -> business -> tests -> project_root
+project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.business.rag.re_ranker.config import ReRankerConfig
