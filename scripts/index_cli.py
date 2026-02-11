@@ -16,20 +16,22 @@ python scripts/rebuild_index.py rebuild \
 
 This ingests your PDFs, chunks them, embeds them, and saves the index to the specified persist_dir.
 """
+import sys
 from pathlib import Path
+
 import typer
+
+# Ensure project root on sys.path when running directly
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from src.business.rag.index_builder import build_index
 
-app = typer.Typer(add_completion=False)
-"""
-persist_dir is the folder on disk where the Chroma vector database is persisted. 
-When build_index() runs, it writes the collection data there—chunk IDs, embeddings, 
-documents (chunk text), and metadata—so the vector store survives restarts. 
-By default (in rebuild_index.py) it points to src/business/rag/vectorstore, 
-but you can change it via the CLI option.
-"""
+# persist_dir is where the Chroma vector DB is persisted.
+# build_index() writes chunk IDs, embeddings, documents, and metadata there.
+# Default: src/business/rag/vectorstore (configurable via CLI).
 
-@app.command()
 def rebuild(
     data_dir: Path = typer.Option("src/business/rag/data", help="Directory with PDFs"),
     persist_dir: Path = typer.Option("src/business/rag/vectorstore", help="Chroma persistence directory"),
@@ -50,4 +52,4 @@ def rebuild(
 
 
 if __name__ == "__main__":
-    app()
+    typer.run(rebuild)

@@ -1,8 +1,10 @@
-"""Chroma vector store wrapper."""
+"""Chroma vector store wrapper.
+
+For production RAG/chatbot systems you may prefer managed vector DBs
+like Weaviate or Pinecone. Chroma is used here for simplicity; swap it
+out for scalability/performance in production.
 """
-For the production level RAG - Chatbot system, the vector databases like weaviate or pinecone are preferred.
-Replace the ChromaDB with those vector DBs for better scalability and performace in Production systems.
-"""
+
 from __future__ import annotations
 
 from typing import List, Dict, Any
