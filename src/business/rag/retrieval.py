@@ -60,18 +60,18 @@ class RAGPipeline:
                 )
             )
         return retrieved
-
-    def answer(self, question: str) -> Tuple[str, str, List[ReRankedChunk]]:
-        retrieved = self._retrieve(question)
-        reranked, confidence = select_context(question, retrieved, self.reranker, policy="hybrid")
-        if not reranked:
-            return "I don't have enough information to answer that yet.", "none", []
-
-        context_strings = []
-        for chunk in reranked:
-            section = chunk.metadata.get("section", "text")
-            prefix = "[Table]" if section == "table" else "[Text]"
-            context_strings.append(f"{prefix} {chunk.text}")
-
-        answer = self.llm.generate(question, context_strings)
-        return answer, confidence, reranked
+# The answer function is the orchestration of the RAG pipeline not just the retrieval step.
+    def answer(self, question: str) -> Tuple[str,list[ReRankedChunk]]:
+        # Step 1: Retrieve relevant chunks
+        retrieved_chunks = self._retrieve(question, top_k=self.reranker_config.initial_top_k)
+        
+        # Step 2: Re-rank the retrieved chunks
+        reranked_chunks = self.reranker.rerank(question, retrieved_chunks)
+        
+        # Step 3: Select context for prompting
+        selected_context = select_context(reranked_chunks, self.reranker_config.max_context_tokens, self.embedder.tokenizer)
+        
+        # Step 4: Generate answer using LLM
+        answer = self.llm.generate(question, [chunk.text for chunk in selected_context])
+        
+        return answer, selected_context
