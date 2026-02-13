@@ -48,13 +48,13 @@ class IngestedDocument:
     metadata: Dict[str, int]
 
 
-def _load_pdf_elements(pdf_path: Path, image_output_dir: Path):
+def _load_pdf_elements(pdf_path: Path, image_output_dir: Path, strategy: str = "hi_res"):
+    """Load PDF elements. strategy: 'hi_res' (OCR, slower, better quality) | 'fast' (no OCR, faster)."""
     return partition_pdf(
         filename=str(pdf_path),
-        strategy="hi_res",
-        skip_infer_table_types=False,
+        strategy=strategy,
         languages=["eng"],
-        extract_images_in_pdf=True,
+        extract_images_in_pdf=(strategy == "hi_res"),  # fast mode often skips image extraction
         extract_image_block_types=["Image", "Table"],
         extract_image_block_to_payload=False,
         extract_image_block_output_dir=str(image_output_dir),
@@ -80,10 +80,12 @@ def ingest_single_pdf(
     image_output_dir: Path,
     max_context_chars: int = 12_000,
     include_table_images: bool = True,
+    pdf_strategy: str = "hi_res",
 ) -> IngestedDocument:
-    """Ingest one PDF and return structured text artifacts."""
-
-    elements = _load_pdf_elements(pdf_path, image_output_dir=image_output_dir)
+    """Ingest one PDF and return structured text artifacts.
+    pdf_strategy: 'hi_res' (OCR, slower) | 'fast' (no OCR, faster; table images may be skipped).
+    """
+    elements = _load_pdf_elements(pdf_path, image_output_dir=image_output_dir, strategy=pdf_strategy)
 
     text_blocks = _text_blocks_from_elements(elements)
     pdf_tables_count = _count_tables(elements)
@@ -134,9 +136,11 @@ def ingest_directory(
     image_output_dir: Optional[Path] = None,
     max_context_chars: int = 12_000,
     include_table_images: bool = True,
+    pdf_strategy: str = "hi_res",
 ) -> List[IngestedDocument]:
-    """Ingest all PDFs in a directory and return structured results."""
-
+    """Ingest all PDFs in a directory and return structured results.
+    pdf_strategy: 'hi_res' (OCR, slower) | 'fast' (no OCR, faster).
+    """
     if image_output_dir is None:
         image_output_dir = data_dir / ".." / "artifacts" / "images"
     image_output_dir = image_output_dir.resolve()
@@ -154,6 +158,7 @@ def ingest_directory(
                 image_output_dir=image_output_dir,
                 max_context_chars=max_context_chars,
                 include_table_images=include_table_images,
+                pdf_strategy=pdf_strategy,
             )
         )
     return results
